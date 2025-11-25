@@ -47,44 +47,72 @@ export function ChatMessage({ message }: ChatMessageProps) {
             : "bg-muted text-foreground mr-12"
         )}
       >
-        <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:mt-3 prose-headings:mb-2 prose-p:my-2 prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-strong:font-bold prose-ul:my-2 prose-ol:my-2 prose-li:my-1">
+        <div className="prose prose-sm max-w-none dark:prose-invert">
           {isUser ? (
             <div className="whitespace-pre-wrap break-words">{message.content}</div>
           ) : (
             <ReactMarkdown
               components={{
-                a: ({ node, ...props }) => (
+                a: ({ node, children, href, ...props }) => (
                   <a
                     {...props}
+                    href={href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-primary hover:text-primary/80 underline font-medium transition-colors"
-                  />
+                    className="text-primary hover:text-primary/80 underline font-semibold transition-colors inline-block my-1"
+                  >
+                    {children}
+                  </a>
                 ),
                 h1: ({ node, ...props }) => (
-                  <h1 {...props} className="text-xl font-bold mt-4 mb-2" />
+                  <h1 {...props} className="text-xl font-bold mt-4 mb-3" />
                 ),
                 h2: ({ node, ...props }) => (
-                  <h2 {...props} className="text-lg font-bold mt-3 mb-2" />
+                  <h2 {...props} className="text-lg font-bold mt-4 mb-3" />
                 ),
                 h3: ({ node, ...props }) => (
-                  <h3 {...props} className="text-base font-bold mt-2 mb-1" />
+                  <h3 {...props} className="text-base font-bold mt-3 mb-2" />
                 ),
-                p: ({ node, ...props }) => (
-                  <p {...props} className="my-2 leading-relaxed" />
-                ),
+                p: ({ node, children, ...props }) => {
+                  // Convert children to string to check content
+                  const content = String(children)
+
+                  // If this paragraph contains "Why:" add extra spacing
+                  if (content.includes('Why:')) {
+                    return (
+                      <p {...props} className="my-3 leading-relaxed pl-4 border-l-2 border-primary/30">
+                        {children}
+                      </p>
+                    )
+                  }
+
+                  return (
+                    <p {...props} className="my-2 leading-relaxed">
+                      {children}
+                    </p>
+                  )
+                },
                 strong: ({ node, ...props }) => (
-                  <strong {...props} className="font-bold" />
+                  <strong {...props} className="font-bold text-foreground" />
                 ),
                 ul: ({ node, ...props }) => (
-                  <ul {...props} className="list-disc list-inside my-2 space-y-1" />
+                  <ul {...props} className="list-disc list-inside my-3 space-y-2" />
                 ),
                 ol: ({ node, ...props }) => (
-                  <ol {...props} className="list-decimal list-inside my-2 space-y-1" />
+                  <ol {...props} className="list-decimal list-inside my-3 space-y-3" />
+                ),
+                li: ({ node, ...props }) => (
+                  <li {...props} className="my-2 leading-relaxed" />
                 ),
                 hr: ({ node, ...props }) => (
                   <hr {...props} className="my-4 border-border" />
                 ),
+                code: ({ node, inline, ...props }) =>
+                  inline ? (
+                    <code {...props} className="bg-secondary px-1 py-0.5 rounded text-sm" />
+                  ) : (
+                    <code {...props} className="block bg-secondary p-2 rounded my-2" />
+                  ),
               }}
             >
               {message.content}
