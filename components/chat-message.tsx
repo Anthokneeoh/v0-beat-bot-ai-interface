@@ -1,47 +1,100 @@
 "use client"
 
+import { Bot, User } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Headphones, User } from "lucide-react"
-import ReactMarkdown from "react-markdown"
 
 export interface Message {
   id: string
   role: "user" | "assistant"
   content: string
+  timestamp?: Date
 }
 
 interface ChatMessageProps {
   message: Message
 }
 
+// Function to convert URLs in text to clickable links
+const renderMessageWithLinks = (content: string) => {
+  // Regular expression to match URLs
+  const urlRegex = /(https?:\/\/[^\s]+)/g
+
+  // Split content by URLs
+  const parts = content.split(urlRegex)
+
+  return parts.map((part, index) => {
+    // Check if this part is a URL
+    if (part.match(urlRegex)) {
+      return (
+        <a
+          key={index}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary hover:text-primary/80 underline font-medium transition-colors"
+        >
+          {part}
+        </a>
+      )
+    }
+    // Return plain text with preserved line breaks
+    return part.split('\n').map((line, lineIndex) => (
+      <span key={`${index}-${lineIndex}`}>
+        {line}
+        {lineIndex < part.split('\n').length - 1 && <br />}
+      </span>
+    ))
+  })
+}
+
 export function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.role === "user"
 
   return (
-    <div className={cn("flex gap-3 mb-4", isUser && "flex-row-reverse")}>
-      <Avatar className={cn("h-8 w-8", isUser ? "bg-primary" : "bg-muted")}>
-        <AvatarImage src={isUser ? "" : "/beatbot-avatar.png"} />
-        <AvatarFallback>{isUser ? <User className="h-4 w-4" /> : <Headphones className="h-4 w-4" />}</AvatarFallback>
-      </Avatar>
+    <div
+      className={cn(
+        "flex gap-3 text-sm",
+        isUser ? "flex-row-reverse" : "flex-row"
+      )}
+    >
       <div
         className={cn(
-          "rounded-lg px-4 py-2 max-w-[85%]",
-          isUser ? "bg-primary text-primary-foreground" : "bg-muted text-foreground",
+          "flex h-8 w-8 shrink-0 select-none items-center justify-center rounded-full",
+          isUser
+            ? "bg-primary text-primary-foreground"
+            : "bg-secondary text-secondary-foreground"
         )}
       >
-        <ReactMarkdown
-          components={{
-            p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
-            a: ({ node, ...props }) => (
-              <a target="_blank" rel="noopener noreferrer" className="underline font-medium hover:text-blue-400" {...props} />
-            ),
-            ul: ({ node, ...props }) => <ul className="list-disc pl-4 mb-2" {...props} />,
-            ol: ({ node, ...props }) => <ol className="list-decimal pl-4 mb-2" {...props} />,
-          }}
-        >
-          {message.content}
-        </ReactMarkdown>
+        {isUser ? (
+          <User className="h-4 w-4" />
+        ) : (
+          <Bot className="h-4 w-4" />
+        )}
+      </div>
+      <div
+        className={cn(
+          "flex-1 space-y-2 overflow-hidden rounded-lg px-4 py-3",
+          isUser
+            ? "bg-primary text-primary-foreground ml-12"
+            : "bg-muted text-foreground mr-12"
+        )}
+      >
+        <div className="whitespace-pre-wrap break-words">
+          {renderMessageWithLinks(message.content)}
+        </div>
+        {message.timestamp && (
+          <div
+            className={cn(
+              "text-xs opacity-70",
+              isUser ? "text-primary-foreground" : "text-muted-foreground"
+            )}
+          >
+            {message.timestamp.toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </div>
+        )}
       </div>
     </div>
   )
