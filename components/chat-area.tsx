@@ -54,25 +54,42 @@ export function ChatArea() {
     setMessages((prev) => [...prev, userMessage])
     setIsTyping(true)
 
-    // Simulate AI response (ready for Poe API integration)
-    setTimeout(() => {
-      const aiResponses = [
-        "Great choice! Based on your interest, I'd recommend checking out artists like LCD Soundsystem, Justice, and Kavinsky. They all have that electronic dance vibe with a retro twist. Want me to create a playlist with these artists?",
-        'I love that energy! Here are some tracks that might get you pumped:\n\n1. "Blinding Lights" - The Weeknd\n2. "Levitating" - Dua Lipa\n3. "Don\'t Start Now" - Dua Lipa\n4. "Uptown Funk" - Bruno Mars\n\nShould I add more or explore a different genre?',
-        "Amazing taste! Electronic music has so many incredible subgenres. Are you more into house, techno, synthwave, or something more ambient? I can tailor my recommendations based on your mood.",
-        "Let me analyze that for you! Based on current trends and your preferences, I think you'd love the new wave of hyperpop and experimental electronic artists. Artists like 100 gecs, SOPHIE, and AG Cook are pushing boundaries. Interested?",
-      ]
+    try {
+      // Call your Poe API via Next.js backend
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: content }),
+      })
 
-      const aiMessage: Message = {
+      const data = await res.json()
+
+      if (res.ok && data.response) {
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: data.response,
+          role: "assistant",
+          timestamp: new Date(),
+        }
+        setMessages((prev) => [...prev, aiMessage])
+      } else {
+        throw new Error(data.error || "Failed to get response")
+      }
+    } catch (error) {
+      console.error("Chat error:", error)
+
+      const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: aiResponses[Math.floor(Math.random() * aiResponses.length)],
+        content: "⚠️ **Connection Error:** I'm having trouble connecting to the BeatBot Brain (Poe). Please check your internet connection or API configuration.",
         role: "assistant",
         timestamp: new Date(),
       }
-
-      setMessages((prev) => [...prev, aiMessage])
+      setMessages((prev) => [...prev, errorMessage])
+    } finally {
       setIsTyping(false)
-    }, 1500)
+    }
   }
 
   const handlePromptClick = (prompt: string) => {
